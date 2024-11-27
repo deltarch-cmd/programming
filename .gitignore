@@ -1,0 +1,10 @@
+# Ignore environment configurations
+.env
+
+# Ignore rustlings files
+rustlings/
+
+# Ignore temporary files
+*.log
+*.tmp
+*.bak
