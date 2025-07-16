@@ -1,7 +1,10 @@
 {
-    "HOME": "/home/delta",
-    "last_directory_used": "/Pictures/wallpapers/",
-    "last_wallpaper": "nixos.png",
-
-    "allowed_extensions": [".png", ".jpg", "jpeg"]
+ "HOME": "/home/delta",
+ "last_directory_used": "/Pictures/wallpapers/",
+ "last_wallpaper": "wallhaven-gpegye.jpg",
+ "allowed_extensions": [
+  ".png",
+  ".jpg",
+  "jpeg"
+ ]
 }

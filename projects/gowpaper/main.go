@@ -1,89 +1,49 @@
 package main
 
 import (
-	"encoding/json"
+	"gowpaper/internal/backend"
+	"gowpaper/internal/config"
+	"gowpaper/internal/imagepicker"
+
 	"fmt"
 	"log"
-	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
-type Config struct {
-	Home string `json:"HOME"`
-	LastDirUsed string `json:"last_directory_used"`
-	LastWallpaper string `json:"last_wallpaper"`
-	AllowedExt []string `json:"allowed_extensions"`
-}
+func setWallpaper(b *backend.Backend, path, picture string) {
+	wallpaper := filepath.Join(path, picture)
+	cmd := exec.Command(b.Cmd, append(b.Args, wallpaper)...)
 
-func getData() Config {
-	content, err := os.ReadFile("./config.json")
-	if err != nil {
-		log.Fatal(err)
+	if err := cmd.Run(); err != nil {
+		log.Fatalf("Failed to set wallpaper: %v", err)
 	}
-
-	var config Config
-	err = json.Unmarshal(content, &config)
-	if err != nil {
-		log.Fatal("Error during Unmarshal ono: ", err)
-	}
-
-	return config
-}
-
-func getPicturesFromDir(path string, allowedExts []string) []string {
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var pictures []string
-	for _, entry := range entries {
-		name := entry.Name()
-		for _, ext := range allowedExts {
-			if strings.HasSuffix(strings.ToLower(name), strings.ToLower(ext)) {
-				pictures = append(pictures, name)
-				break
-			}
-		}
-	}
-
-	return pictures
-}
-
-func chooseWallpaper(pictures []string) string {
-	for i, pic := range pictures {
-		fmt.Printf("%d) %s\n", i+1, pic)
-	}
-
-	var election int
-	fmt.Scanf("%d", &election)
-
-	if election < 1 || election > len(pictures) {
-		log.Fatalf("Invalid selection: %d", election)
-	}
-
-	return pictures[election-1]
+	fmt.Println("Wallpaper set successfully!")
 }
 
 func main() {
-	var conf Config = getData()
+	conf := config.Load()
 
-	var full_path string = filepath.Join(conf.Home, conf.LastDirUsed)
-	var pictures []string = getPicturesFromDir(filepath.Join(full_path), conf.AllowedExt)
+	// Check the backend and choose a tool to set the wallpaper
+	tooling := backend.DetectBackend()
+	if tooling == nil {
+		log.Fatal("No backend detected")
+	}
+
+	// Check pictures from the selected directory
+	// !TODO Make it so the directory can be choosen if none is saved
+	var fullPath string = filepath.Join(conf.Home, conf.LastDirUsed)
+	var pictures []string = imagepicker.GetPicturesFromDir(fullPath, conf.AllowedExt)
 
 	if len(pictures) == 0 {
 		log.Fatal("No valid pictures found.")
 	}
 
-	var selected string = chooseWallpaper(pictures)
-	fmt.Printf("The wallpaper selected is %s, lets try setting it!\n", selected)
+	var imageSelected string = imagepicker.ChooseWallpaper(pictures)
+	setWallpaper(tooling, fullPath, imageSelected)
 
-	err := exec.Command("swww", "img", filepath.Join(full_path, selected)).Run()
-	if err != nil {
-		log.Fatal(err)
+	conf.LastWallpaper = imageSelected
+	if err := config.Save("config.json", &conf); err != nil {
+		log.Printf("Failed to update config %v", err)
 	}
-
-	fmt.Printf("Wallpaper should be set! o7")
 }
