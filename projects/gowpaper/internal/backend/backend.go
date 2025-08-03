@@ -11,7 +11,7 @@ type Backend struct {
 	Args []string
 }
 
-func DetectBackend() *Backend {
+func detectBackend() *Backend {
 	switch os.Getenv("XDG_SESSION_TYPE") {
 	case "x11":
 		return &Backend {
@@ -28,4 +28,21 @@ func DetectBackend() *Backend {
 	}
 	log.Printf("Unknown session type")
 	return nil
+}
+
+/* 
+This function is mainly needed for full DE's like Plasma that use specific tools
+We can argue that swww or feh are also usable, but I prefer the default tools for each env
+*/
+func SelectBackend() *Backend {
+	switch os.Getenv("XDG_CURRENT_DESKTOP") {
+	case "KDE":
+		return &Backend{
+			Name: "plasma-apply-wallpaperimage",
+			Cmd: "plasma-apply-wallpaperimage",
+			Args: []string{},
+		}
+	default:
+		return detectBackend()
+	}
 }

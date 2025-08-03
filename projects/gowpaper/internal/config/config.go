@@ -13,6 +13,7 @@ type Config struct {
 	AllowedExt []string `json:"allowed_extensions"`
 }
 
+// Load the JSON file and return it
 func Load() Config {
 	content, err := os.ReadFile("./config.json")
 	if err != nil {
@@ -27,6 +28,7 @@ func Load() Config {
 	return config
 }
 
+// Save the JSON file with the given data
 func Save(configPath string, conf *Config) error {
 	data, err := json.MarshalIndent(conf, "", " ")
 	if err != nil {
